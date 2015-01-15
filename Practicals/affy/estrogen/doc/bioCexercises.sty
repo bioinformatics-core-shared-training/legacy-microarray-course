@@ -1,0 +1,50 @@
+%% This is file `bioCexercises.sty',
+%%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{bioCexercises}
+                 [2003/03/10 v0.01]
+
+\newcommand{\func}[1]{{\tt#1}}
+\newcommand{\file}[1]{{\tt#1}}
+\newcommand{\code}[1]{{\tt#1}}
+\newcommand{\Rpack}[1]{{\tt #1}}
+
+\pagestyle{myheadings}
+\newcommand{\themark}{Bioconductor exercises}
+\markboth{\themark}{\themark}
+\markright{\themark}
+
+\newcommand{\thetitle}[1]{{\centerline{\Large \bf \sf #1}}\vspace{2ex}}
+\newcommand{\theauthor}[1]{{\centerline{#1}}\vspace{3ex}}
+\newcommand{\theoccasion}[1]{{\centerline{\large \sf #1}}\vspace{1ex}}
+
+%%----------------------environment: exercise-----------------------
+\setlength{\parindent}{0cm}
+\newcounter{dumbo} 
+\newenvironment{exercise}{%
+  \begin{list}{\textbf{\alph{dumbo}. }}{%
+     \usecounter{dumbo}
+     \setlength{\topsep}{0cm}
+     \setlength{\parsep}{0cm}    %% vertical separation between paragraphs
+     \setlength{\itemsep}{0cm}   %% additional vertical separation between list items
+     \setlength{\labelsep}{0cm}  
+     \setlength{\leftmargin}{5mm}   %% left indent
+     \setlength{\rightmargin}{0mm}}}%
+   {\end{list}}
+%%----------------------environment: exercises----------------------
+\setlength{\parindent}{0cm}
+\newcounter{bambi} 
+\newenvironment{exercises}{%
+  \begin{list}{\textbf{\arabic{bambi}.) }}{%
+     \usecounter{bambi}
+     \setlength{\topsep}{0cm}
+     \setlength{\itemsep}{1ex}   
+     \setlength{\labelsep}{0cm}  
+     \setlength{\leftmargin}{0mm}  
+     \setlength{\rightmargin}{0mm}}}%
+   {\end{list}}
+%%------------------------------------------------------------------------
+
+\endinput
+%%
+%% End of file `trig.sty'.

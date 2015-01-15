@@ -1,0 +1,3 @@
+SpotType	ID	Name	Color	pch	cex
+gene	*	*	black	18	0.4
+control	control	*	magenta	16	1.2

@@ -1,0 +1,9 @@
+Name	FileName	Target
+Abs10.1	low10-1.cel	EstAbsent10
+Abs10.2	low10-2.cel	EstAbsent10
+Pres10.1	high10-1.cel	EstPresent10
+Pres10.2	high10-2.cel	EstPresent10
+Abs48.1	low48-1.cel	EstAbsent48
+Abs48.2	low48-2.cel	EstAbsent48
+Pres48.1	high48-1.cel	EstPresent48
+Pres48.2	high48-2.cel	EstPresent48

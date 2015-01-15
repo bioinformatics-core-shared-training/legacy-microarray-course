@@ -1,0 +1,385 @@
+%\VignetteIndexEntry{estrogen}
+%\VignetteDepends{Biobase,affy}
+%\VignetteKeywords{Expression Analysis}
+%\VignettePackage{}
+
+\documentclass[a4paper]{article}
+\usepackage{bioCexercises}
+
+\usepackage{times}
+\usepackage{a4wide}
+\begin{document}
+
+\thetitle{Working with Affymetrix data: estrogen, a 2x2 factorial design 
+example}
+\theoccasion{June 2004}
+\theauthor{Robert Gentleman, Wolfgang Huber}
+
+
+\begin{exercises}
+%%--------------------Ex.1------------------------------ 
+\item {\bf Preliminaries.}  
+To go through this exercise, you need to have installed R>=1.9.0, the
+libraries \Rpack{Biobase}, \Rpack{affy}, \Rpack{hgu95av2},
+\Rpack{hgu95av2cdf}, and \Rpack{vsn} from the Bioconductor release 1.4.
+
+<<cwd,echo=FALSE,results=hide>>=
+cwd=getwd()
+@
+
+<<libraries,echo=TRUE,results=hide>>=
+library(affy)
+library(estrogen)
+library(vsn)
+@
+
+%%--------------------Ex.2------------------------------ 
+\item {\bf Load the data.}  
+\begin{exercise}
+\item Find the directory where the example cel files are. The directory path
+should end in\\
+\file{.../R/library/estrogen/extdata}. 
+<<datadir>>=
+datadir = system.file("extdata", package="estrogen")
+datadir
+dir(datadir)
+setwd(datadir)
+@
+
+The function \code{system.file} here is used to find the subdirectory
+\code{extdata} of the estrogen package on your computer's harddisk.  To use
+your own data, set \code{datadir} to the appropriate path instead.
+
+%%---------- 2b
+\item The file \file{estrogen.txt} contains information on the samples that
+were hybridized onto the arrays. Look at it in a text editor. Again, to use
+your own data, you need to preprare a similar file with the appropriate
+information on your arrays and samples.
+To load it into a \code{phenoData} object
+<<loadpdata>>=
+pd = read.phenoData("estrogen.txt", header=TRUE, row.names=1)
+pData(pd)
+@
+\code{phenoData} objects are where the Bioconductor stores information about 
+samples, for example, treatment conditions in a cell line experiment or 
+clinical or histopathological characteristics of tissue biopsies. 
+The \code{header} option lets the \code{read.phenoData} function know that
+the first line in the file contains column headings, and the 
+\code{row.names} option indicates that the first column of the file contains 
+the row names.
+
+
+%%---------- 2c
+\item Load the data from the CEL files as well as the phenotypic data 
+into an \code{AffyBatch} object. 
+
+<<a.read,results=hide>>=
+a = ReadAffy(filenames = rownames(pData(pd)), 
+             phenoData = pd,
+             verbose=TRUE)
+@
+<<a.show>>=
+a
+@
+
+\end{exercise}
+
+\begin{figure}[h]
+\begin{center}	
+  \includegraphics[width=0.49\textwidth]{estrogen-image1}
+  \includegraphics[width=0.49\textwidth]{estrogen-image2}
+  \caption{\label{estrogen-image} see exercise 4.}
+ \end{center}
+\end{figure}
+
+%%--------------------Ex.3------------------------------ 
+\item {\bf Normalization.}  
+\begin{exercise}
+\item Now we can use the function \func{expresso} to normalize the
+data and calculate expression values. 
+
+<<x.calc,results=hide>>=
+x <- expresso(a,
+	     bg.correct       = FALSE,   ## bg correction is done by vsn
+             normalize.method = "vsn",
+             normalize.param  = list(subsample=1000), 
+             pmcorrect.method = "pmonly", 
+             summary.method   = "medianpolish")
+@
+<<x.show>>=
+x
+@
+
+The parameter \code{subsample} determines the time consumption, as well as
+the precision of the calibration. The default (if you leave away the parameter
+\code{normalize.param  = list(subsample=1000)}) is 20000; here we chose a smaller
+value for the sake of demonstration. There is the possibility that
+\code{expresso} is not working properly due to  memory problems
+(normally it should work with 384 MB). Then you should end this session, 
+start a new R session, and load the libraries and data by typing
+ 
+<<get backup, eval=FALSE>>=
+library(affy)
+library(estrogen)
+library(vsn)
+datadir = system.file("extdata", package="estrogen")
+setwd(datadir)
+load("workspace.RData")
+@
+\code{image.RData} includes the expression set \code{x} and the 
+affybatch \code{a}. Then you can continue with the next paragraph.
+
+\item What are other available methods for \textit{normalization}, and
+\textit{expression value calculation}? You can consult the vignettes for the
+\Rpack{affy} package for this. Choose another method (for example,
+MAS5 or RMA) and compare the results. For example, look at scatterplots of the
+probe set summaries for the same arrays between different methods.
+
+<<normmeth>>=
+normalize.methods(a)
+express.summary.stat.methods
+@
+\end{exercise}
+
+
+%%--------------------Ex.4------------------------------ 
+\item {\bf Looking at the CEL file images.}  
+The \func{image} function allows us to look at the spatial 
+distribution of the intensities on a chip. This can be useful for 
+quality control. Fortunately, all of the 8 celfiles that we have 
+just loaded do not show any remarkable spatial artifacts 
+(see Fig.~\ref{estrogen-image}).
+%
+<<images1a,eval=FALSE>>=
+image(a[, 1])
+@
+<<images1b,eval=TRUE,results=hide,echo=FALSE>>=
+jpeg(file.path(cwd, "estrogen-image1.jpg"), quality=100)
+image(a[, 1])
+dev.off()
+@
+%
+But we have another example:
+%
+<<images2a,eval=FALSE>>=
+badc = ReadAffy("bad.cel")
+image(badc)
+@
+<<images2b,echo=FALSE,results=hide>>=
+jpeg(file.path(cwd, "estrogen-image2.jpg"), quality=100)
+badc = ReadAffy("bad.cel")
+image(badc)
+dev.off()
+@
+%
+Note that in these images, row 1 is at the bottom, and row 640 
+at the top.
+
+\begin{figure}[h]
+\begin{center}	
+  \includegraphics[width=0.49\textwidth]{estrogen-hist}
+  \caption{\label{estrogen-hist} see exercise 5.}
+ \end{center}
+\end{figure}
+
+%
+<<setwd,echo=FALSE,results=hide>>=
+setwd(cwd)
+@ 
+
+%%--------------------Ex.5------------------------------ 
+\item {\bf Histograms.}  
+Another way to visualize what is going on on a chip is to 
+look at the histogram of its intensity distribution.  
+Because of the large dynamical range ($O(10^4)$), it is 
+useful to look at the log-transformed values
+(see Fig.~\ref{estrogen-hist}):
+%
+<<hist,fig=TRUE,include=FALSE,width=5,height=5>>=
+hist(log2(intensity(a[, 4])), breaks=100, col="blue")
+@
+%
+\begin{figure}[h]
+\begin{center}	
+  \includegraphics[width=0.8\textwidth]{estrogen-boxplotb}
+  \caption{\label{estrogen-boxplot} see exercise 6.}
+ \end{center}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}	
+  \includegraphics[width=0.49\textwidth]{estrogen-scp1}
+  \includegraphics[width=0.49\textwidth]{estrogen-scp2} \\
+  \includegraphics[width=0.49\textwidth]{estrogen-scp3}
+  \includegraphics[width=0.49\textwidth]{estrogen-scp4}
+  \caption{\label{estrogen-scp} see exercise 7.}
+ \end{center}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}	
+  \includegraphics[width=0.8\textwidth]{estrogen-heatmap}
+  \caption{\label{estrogen-heatmap} see exercise 8.}
+ \end{center}
+\end{figure}
+
+\begin{figure}[h]
+\begin{center}	
+  \includegraphics[width=\textwidth]{estrogen-eff-show}
+  \caption{\label{estrogen-eff} see exercise 9.}
+ \end{center}
+\end{figure}
+
+%%--------------------Ex.6------------------------------ 
+\item {\bf Boxplot.}  
+To compare the intensity distribution across several chips, 
+we can look at the boxplots, both of the raw intensities 
+\code{a} and the normalized probe set values \code{x}
+(see Fig.~\ref{estrogen-boxplot}):
+%
+<<boxplota,eval=FALSE>>=
+boxplot(a,col="red")
+boxplot(data.frame(exprs(x)), col="blue")
+@
+<<boxplotb,fig=TRUE,include=FALSE,eval=TRUE,results=hide,echo=FALSE>>==
+par(mfrow=c(1,2))
+colnames(exprs(a)) = colnames(exprs(x)) = paste(1:8)
+boxplot(a,col="red")
+boxplot(data.frame(exprs(x)), col="blue")
+par(mfrow=c(1,1))
+@
+%
+In the commands above, note the different syntax: \code{a} is an 
+object of type \code{AffyBatch}, and the \code{boxplot} function 
+has been programmed to know automatically what to do with it. 
+\code{exprs(x)} is an object of type \code{matrix}. 
+What happens if you do \code{boxplot(x)} or 
+\code{boxplot(exprs(x))}?
+
+<<classx>>=
+class(x)
+class(exprs(x))
+@
+
+%%--------------------Ex.7------------------------------ 
+\item {\bf Scatterplot.}  
+The scatterplot is a visualization that is useful for assessing the
+variation (or reproducibility, depending on how you look at it)
+between chips. We can look at all probes, the perfect match probes 
+only, the mismatch probes only, and of course also at the 
+normalized, probe-set-summarized data:
+(see Fig.~\ref{estrogen-scp}):
+%
+<<scp-plots,eval=TRUE,echo=FALSE,results=hide>>=
+jpeg(file.path(cwd, "estrogen-scp1.jpg"), quality=100)
+plot(exprs(a)[, 1:2], log="xy", pch=".", main="all")
+dev.off()
+
+jpeg(file.path(cwd, "estrogen-scp2.jpg"), quality=100)
+plot(pm(a)[, 1:2], log="xy", pch=".", main="pm")
+dev.off()
+
+jpeg(file.path(cwd, "estrogen-scp3.jpg"), quality=100)
+plot(mm(a)[, 1:2], log="xy", pch=".", main="mm")
+dev.off()
+
+jpeg(file.path(cwd, "estrogen-scp4.jpg"), quality=100)
+plot(exprs(x)[, 1:2], pch=".", main="x")
+dev.off()
+@
+%
+Why are the arrays that were made at $t=48$h much brighter than those at
+$t=10$h?  Look at histograms and scatterplots of the probe intensities from
+chips at 10h and at48h to see whether you can find any evidence of saturation,
+changes in experimental protocol, or other quality problems. Distinguish
+between probes that are supposed to represent genes (you can access these
+e.g. through the functions \code{pm()}) and control probes.
+
+<<scp,eval=FALSE>>=
+plot(exprs(a)[,1:2], log="xy", pch=".", main="all")
+plot(pm(a)[, 1:2], log="xy", pch=".", main="pm")
+plot(mm(a)[, 1:2], log="xy", pch=".", main="mm")
+plot(exprs(x)[, 1:2], pch=".", main="x")
+@
+
+%%----------Ex.8----------
+\item {\bf Heatmap.}  
+Select the 50 genes with the highest variation (standard deviation) 
+across chips. (see Fig.~\ref{estrogen-heatmap}):
+
+<<heatmapa>>=
+rsd <- rowSds(exprs(x))
+sel <- order(rsd, decreasing=TRUE)[1:50] 
+@ 
+<<heatmapb,eval=FALSE>>=
+heatmap(exprs(x)[sel,], col=gentlecol(256))
+@
+<<heatmapc,results=hide,echo=FALSE>>=
+jpeg(file.path(cwd, "estrogen-heatmap.jpg"), quality=100)
+heatmap(exprs(x)[sel,], col=gentlecol(256))
+dev.off()
+@
+
+%%----------Ex.9----------
+\item {\bf ANOVA.}  
+Now we can start analysing our data for biological effects.
+We set up a linear model with main effects for the level of estrogen  
+(\code{estrogen}) and the time (\code{time.h}). Both are factors with 
+2 levels.
+
+<<deflm>>=
+lm.coef = function(y) 
+  lm(y ~ estrogen * time.h)$coefficients
+eff = esApply(x, 1, lm.coef)
+@
+
+%% For all k = 1:12625:
+%%
+%% eff[1,k] + eff[2,k]*est + eff[3,k]*tim + res[,k] ==  exprs(x)[k,] 
+%%
+%% where tim = pData(x)$time.h
+%%       est = as.numeric(factor(pData(x)$estrogen))-1
+
+For each gene, we obtain the fitted coefficients for main effects and 
+interaction:
+<<showlmres>>=
+dim(eff)
+rownames(eff)
+affyids <- colnames(eff)
+@
+
+Let's bring up the mapping from the vendor's probe set identifier to 
+gene names.
+<<gn>>=
+library(hgu95av2) 
+ls("package:hgu95av2")
+@
+
+Let's now first look at the {\bf estrogen main effect}, and print the
+top 3 genes with largest effect in one direction, as well as in the
+other direction. Then, look at the {\bf estrogen:time interaction}.
+
+<<eff-show,fig=TRUE,include=FALSE,width=8,height=5,echo=FALSE,results=hide>>=
+par(mfrow=c(1,1))
+hist(eff[2,], breaks=100, col="blue", main="estrogen main effect")
+setwd(cwd)
+@
+%
+<<eff>>=
+lowest <- sort(eff[2,], decreasing=FALSE)[1:3]
+mget(names(lowest), hgu95av2GENENAME)
+
+highest <- sort(eff[2,], decreasing=TRUE)[1:3]
+mget(names(highest), hgu95av2GENENAME)
+
+hist(eff[4,], breaks=100, col="blue", main="estrogen:time interaction")
+highia <- sort(eff[4,], decreasing=TRUE)[1:3]
+mget(names(highia), hgu95av2GENENAME)
+@
+
+
+\end{exercises}
+\end{document}
+
+
+
